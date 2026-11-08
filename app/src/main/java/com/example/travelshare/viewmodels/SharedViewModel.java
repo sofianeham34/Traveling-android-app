@@ -120,8 +120,9 @@ public class SharedViewModel extends AndroidViewModel {
         return firebaseRepository.getPhotosByLocationLive(lat, lng, delta);
     }
 
-    public void updateLikes(int photoId, int likes) {
-        firebaseRepository.updateLikes(photoId, likes);
+    // delta = +1 (j'aime) ou -1 (je n'aime plus)
+    public void changeLikes(int photoId, int delta) {
+        firebaseRepository.incrementLikes(photoId, delta);
     }
 
     public void deletePhoto(int photoId) {

@@ -40,7 +40,6 @@ import com.example.travelshare.data.models.GroupMessage;
 import com.example.travelshare.data.models.Photo;
 import com.example.travelshare.data.repository.FirebaseRepository;
 import com.example.travelshare.ui.theme.adapters.ExplorerPostAdapter;
-import com.example.travelshare.utils.NotificationUtil;
 import com.example.travelshare.utils.SessionManager;
 import com.example.travelshare.viewmodels.SharedViewModel;
 
@@ -367,7 +366,7 @@ public class ExplorerFragment extends Fragment implements SensorEventListener {
         getLikePrefs().edit().putStringSet(getLikeKey(), likedIds).apply();
         int newLikes = Math.max(0, photo.getLikes() + (liked ? -1 : 1));
         photo.setLikes(newLikes);
-        viewModel.updateLikes(photo.getId(), newLikes);
+        viewModel.changeLikes(photo.getId(), liked ? -1 : 1);
         adapter.setLikedIds(getLikedPhotoIdSet());
 
         if (!liked) {
@@ -382,9 +381,8 @@ public class ExplorerFragment extends Fragment implements SensorEventListener {
                 notif.message = liker + " a aimé \"" + photo.getTitle() + "\"";
                 notif.photoId = photo.getId();
                 notif.date = date;
-                viewModel.insertAppNotification(notif);
+                // L'auteur est prévenu via Firestore, pas sur le téléphone de celui qui aime
                 FirebaseRepository.getInstance().saveNotification(author, notif);
-                NotificationUtil.showNotification(requireContext(), "Nouveau like", notif.message);
             }
         }
     }

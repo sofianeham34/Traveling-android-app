@@ -169,14 +169,13 @@ public class FirebaseRepository {
                 });
     }
 
-    public void updateLikes(long photoId, int likes) {
-        Map<String, Object> data = new HashMap<>();
-        data.put("likes", likes);
+    // Incrément atomique côté serveur : deux likes simultanés sont tous les deux comptés.
+    public void incrementLikes(long photoId, int delta) {
         db.collection("photos")
                 .document(String.valueOf(photoId))
-                .set(data, com.google.firebase.firestore.SetOptions.merge())
+                .update("likes", FieldValue.increment(delta))
                 .addOnFailureListener(e ->
-                        android.util.Log.w("FirebaseRepository", "updateLikes failed", e));
+                        android.util.Log.w("FirebaseRepository", "incrementLikes failed", e));
     }
 
     public ListenerRegistration listenToLikes(long photoId, OnLikesChangedListener listener) {
@@ -1068,10 +1067,26 @@ public class FirebaseRepository {
     }
 
     public ListenerRegistration listenToNotifications(String username, AppDatabase localDb, long localUserId) {
+        return listenToNotifications(username, localDb, localUserId, null);
+    }
+
+    // onNewNotification est appelé pour chaque notification reçue après le chargement
+    // initial (pour afficher une notification système au destinataire).
+    public ListenerRegistration listenToNotifications(String username, AppDatabase localDb, long localUserId,
+                                                      Consumer<String> onNewNotification) {
+        final boolean[] initialLoadDone = {false};
         return db.collection("notifications")
                 .whereEqualTo("targetUsername", username)
                 .addSnapshotListener((query, e) -> {
                     if (e != null || query == null) return;
+                    if (onNewNotification != null && initialLoadDone[0]) {
+                        for (com.google.firebase.firestore.DocumentChange change : query.getDocumentChanges()) {
+                            if (change.getType() != com.google.firebase.firestore.DocumentChange.Type.ADDED) continue;
+                            String message = change.getDocument().getString("message");
+                            if (message != null && !message.isEmpty()) onNewNotification.accept(message);
+                        }
+                    }
+                    initialLoadDone[0] = true;
                     AppDatabase.databaseWriteExecutor.execute(() -> {
                         for (QueryDocumentSnapshot doc : query) {
                             String type    = doc.getString("type");

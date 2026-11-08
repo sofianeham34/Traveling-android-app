@@ -19,6 +19,7 @@ import com.example.travelshare.ui.theme.fragments.ProfileFragment;
 import com.example.travelshare.ui.theme.fragments.PublishFragment;
 import com.example.travelshare.data.AppDatabase;
 import com.example.travelshare.data.repository.FirebaseRepository;
+import com.example.travelshare.utils.NotificationUtil;
 import com.example.travelshare.utils.SessionManager;
 import com.example.travelshare.viewmodels.SharedViewModel;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -129,8 +130,19 @@ public class MainActivity extends AppCompatActivity implements InscriptionFragme
             notifListener = null;
         }
         if (!session.isLoggedIn()) return;
+        requestNotificationPermission();
         notifListener = FirebaseRepository.getInstance().listenToNotifications(
-                session.getUsername(), AppDatabase.getInstance(this), session.getUserId());
+                session.getUsername(), AppDatabase.getInstance(this), session.getUserId(),
+                message -> NotificationUtil.showNotification(this, "TravelShare", message));
+    }
+
+    // Android 13+ : les notifications système nécessitent une autorisation explicite.
+    private void requestNotificationPermission() {
+        if (android.os.Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 42);
+        }
     }
 
     @Override

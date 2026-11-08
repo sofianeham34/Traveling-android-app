@@ -10,6 +10,8 @@ Application Android complète autour du voyage, composée de deux modules compl�
 > UE Programmation Mobile — Université de Montpellier 2025-2026  
 > Sofiane Hammar · Anouar Soufyani
 
+![Aperçu de l'application](docs/screenshots/apercu.jpg)
+
 ---
 
 ## Modules
@@ -23,7 +25,7 @@ Application Android complète autour du voyage, composée de deux modules compl�
 - Groupes publics et privés + **chat temps réel** (Firestore, 4 types de messages)
 - Conversations directes entre utilisateurs
 - Carte interactive **OSMDroid** avec pins photos géolocalisés
-- Notifications in-app synchronisées Firestore
+- Notifications synchronisées Firestore (likes, commentaires, messages de groupe, invitations), avec notification système chez le destinataire
 
 ### TravelPath — Générateur d'itinéraires
 - Formulaire : ville, 5 activités, budget, durée, niveau d'effort
@@ -33,6 +35,14 @@ Application Android complète autour du voyage, composée de deux modules compl�
 - Météo temps réel **Open-Meteo** par étape
 - Export **PDF natif** (Canvas Android, format A4)
 - Partage de parcours dans les groupes de discussion
+
+### Captures d'écran
+
+| Connexion | Explorer | Détail d'une photo | Groupes |
+|---|---|---|---|
+| ![Connexion](docs/screenshots/connexion.jpg) | ![Explorer](docs/screenshots/explorer.jpg) | ![Détail](docs/screenshots/detail-photo.jpg) | ![Groupes](docs/screenshots/groupes.jpg) |
+| **Chat de groupe** | **TravelPath — formulaire** | **TravelPath — parcours** | |
+| ![Chat](docs/screenshots/chat-groupe.jpg) | ![Formulaire](docs/screenshots/travelpath-formulaire.jpg) | ![Parcours](docs/screenshots/travelpath-parcours.jpg) | |
 
 ### Passerelle bidirectionnelle
 - TravelShare → TravelPath : destination transmise automatiquement depuis une photo
@@ -86,7 +96,32 @@ ViewModel (SharedViewModel · TravelPathViewModel)
 
 ## Lancer le projet
 
-1. Cloner le repo et ouvrir dans **Android Studio**
+Prérequis : **Android Studio** (JDK 21 inclus) et un émulateur ou un téléphone Android 7.0+.
+
+1. Cloner le dépôt et l'ouvrir dans Android Studio
 2. Attendre la synchronisation Gradle
-3. Le fichier `app/google-services.json` est inclus — Firebase est prêt
-4. Lancer sur un émulateur ou appareil physique
+3. Le fichier `app/google-services.json` est inclus : Firebase est prêt
+4. Lancer sur un émulateur ou un appareil physique
+
+En ligne de commande :
+
+```bash
+./gradlew assembleDebug        # APK dans app/build/outputs/apk/debug/
+```
+
+## Services utilisés
+
+Tous les services sont **gratuits** et la plupart ne demandent aucune clé :
+
+| Service | Usage | Coût |
+|---|---|---|
+| Firebase Auth + Firestore | Comptes, données temps réel | Offre gratuite (Spark) |
+| Cloudinary | Hébergement des images | Offre gratuite |
+| ML Kit Image Labeling | Tags automatiques des photos | Gratuit, sur l'appareil |
+| OpenStreetMap (OSMDroid, Overpass, Nominatim) | Carte, lieux, géocodage | Gratuit, sans clé |
+| OSRM | Calcul des trajets | Gratuit, sans clé |
+| Open-Meteo | Météo | Gratuit, sans clé |
+
+## Documentation
+
+Le rapport complet du projet est disponible dans [`docs/Rapport.pdf`](docs/Rapport.pdf).

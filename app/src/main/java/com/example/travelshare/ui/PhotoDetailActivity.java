@@ -36,7 +36,6 @@ import com.example.travelshare.data.repository.FirebaseRepository;
 import com.example.travelshare.ui.theme.adapters.CommentAdapter;
 import com.example.travelshare.ui.theme.adapters.SquarePhotoAdapter;
 import com.example.travelshare.ui.theme.fragments.PlanDetailFragment;
-import com.example.travelshare.utils.NotificationUtil;
 import com.example.travelshare.utils.SessionManager;
 import com.example.travelshare.viewmodels.SharedViewModel;
 import com.google.android.material.tabs.TabLayout;
@@ -154,10 +153,10 @@ public class PhotoDetailActivity extends AppCompatActivity {
 
         fetchRouteToPhoto();
 
+        // Le compteur affiché suit la valeur en base (mise à jour par tous les utilisateurs)
         likesListener = FirebaseRepository.getInstance().listenToLikes(photoId, newLikes -> {
             currentLikes = newLikes;
             tvLikesCount.setText(currentLikes + " personnes ont aimé");
-            viewModel.updateLikes(photoId, currentLikes);
         });
 
         String username = sessionManager.getUsername();
@@ -179,16 +178,16 @@ public class PhotoDetailActivity extends AppCompatActivity {
             currentLikes = Math.max(0, currentLikes + (isLiked ? 1 : -1));
             btnLike.setText(isLiked ? "♥ Aimé" : "♡ J’aime");
             tvLikesCount.setText(currentLikes + " personnes ont aimé");
-            viewModel.updateLikes(photoId, currentLikes);
-            FirebaseRepository.getInstance().updateLikes(photoId, currentLikes);
+            viewModel.changeLikes(photoId, isLiked ? 1 : -1);
 
             java.util.Set<String> ids = new java.util.HashSet<>(
                     getSharedPreferences("likes", MODE_PRIVATE).getStringSet(likeKey, new java.util.HashSet<>()));
             if (isLiked) ids.add(String.valueOf(photoId)); else ids.remove(String.valueOf(photoId));
             getSharedPreferences("likes", MODE_PRIVATE).edit().putStringSet(likeKey, ids).apply();
 
-            if (isLiked) {
-                String liker    = sessionManager.isLoggedIn() ? sessionManager.getUsername() : "Quelqu'un";
+            // L'auteur est prévenu via Firestore (pas de notification pour son propre like)
+            String liker = sessionManager.getUsername();
+            if (isLiked && author != null && !author.equalsIgnoreCase(liker)) {
                 String likeDate = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new Date());
                 AppNotification notif = new AppNotification();
                 notif.targetUserId = authorId;
@@ -196,9 +195,7 @@ public class PhotoDetailActivity extends AppCompatActivity {
                 notif.message = liker + " a aimé \"" + title + "\"";
                 notif.photoId = photoId;
                 notif.date    = likeDate;
-                viewModel.insertAppNotification(notif);
                 FirebaseRepository.getInstance().saveNotification(author, notif);
-                NotificationUtil.showNotification(this, "Nouveau like", notif.message);
             }
         });
 
@@ -399,15 +396,16 @@ public class PhotoDetailActivity extends AppCompatActivity {
             etInput.setText("");
             Toast.makeText(this, "Commentaire publié !", Toast.LENGTH_SHORT).show();
 
-            AppNotification notif = new AppNotification();
-            notif.targetUserId = authorId;
-            notif.type    = "COMMENT";
-            notif.message = c.authorName + " a commenté \"" + title + "\" : " + text;
-            notif.photoId = photoId;
-            notif.date    = c.date;
-            viewModel.insertAppNotification(notif);
-            FirebaseRepository.getInstance().saveNotification(author, notif);
-            NotificationUtil.showNotification(this, "Nouveau commentaire", notif.message);
+            // L'auteur de la photo est prévenu via Firestore (sauf s'il commente sa propre photo)
+            if (author != null && !author.equalsIgnoreCase(c.authorName)) {
+                AppNotification notif = new AppNotification();
+                notif.targetUserId = authorId;
+                notif.type    = "COMMENT";
+                notif.message = c.authorName + " a commenté \"" + title + "\" : " + text;
+                notif.photoId = photoId;
+                notif.date    = c.date;
+                FirebaseRepository.getInstance().saveNotification(author, notif);
+            }
         });
     }
 

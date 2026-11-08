@@ -30,7 +30,6 @@ import com.example.travelshare.data.models.GroupMessage;
 import com.example.travelshare.data.models.Photo;
 import com.example.travelshare.data.repository.FirebaseRepository;
 import com.example.travelshare.ui.PhotoDetailActivity;
-import com.example.travelshare.utils.NotificationUtil;
 import com.example.travelshare.utils.SessionManager;
 import com.example.travelshare.viewmodels.SharedViewModel;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -210,17 +209,21 @@ public class GroupChatFragment extends Fragment {
             viewModel.sendGroupMessage(msg);
             FirebaseRepository.getInstance().saveMessage(groupName, session.getUsername(), text, date);
 
-            AppNotification notif = new AppNotification();
-            notif.targetUserId = session.getUserId();
-            notif.type    = "GROUP_MESSAGE";
-            notif.message = session.getUsername() + " dans " + groupName + " : " + text;
-            notif.groupId = groupId;
-            notif.date    = date;
-            viewModel.insertAppNotification(notif);
-
-            NotificationUtil.showNotification(requireContext(),
-                    "Nouveau message — " + groupName,
-                    session.getUsername() + " : " + text);
+            // Les autres membres du groupe sont prévenus (pas l'auteur du message)
+            String me = session.getUsername();
+            FirebaseRepository.getInstance().getGroupMembers(groupName, members -> {
+                for (String member : members) {
+                    if (member.equalsIgnoreCase(me)) continue;
+                    AppNotification notif = new AppNotification();
+                    notif.type      = "GROUP_MESSAGE";
+                    notif.message   = me + " dans " + groupName + " : " + text;
+                    notif.groupId   = groupId;
+                    notif.groupName = groupName;
+                    notif.senderUsername = me;
+                    notif.date      = date;
+                    FirebaseRepository.getInstance().saveNotification(member, notif);
+                }
+            });
 
             etInput.setText("");
         });
