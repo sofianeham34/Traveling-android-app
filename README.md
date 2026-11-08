@@ -109,19 +109,6 @@ En ligne de commande :
 ./gradlew assembleDebug        # APK dans app/build/outputs/apk/debug/
 ```
 
-## Services utilisés
-
-Tous les services sont **gratuits** et la plupart ne demandent aucune clé :
-
-| Service | Usage | Coût |
-|---|---|---|
-| Firebase Auth + Firestore | Comptes, données temps réel | Offre gratuite (Spark) |
-| Cloudinary | Hébergement des images | Offre gratuite |
-| ML Kit Image Labeling | Tags automatiques des photos | Gratuit, sur l'appareil |
-| OpenStreetMap (OSMDroid, Overpass, Nominatim) | Carte, lieux, géocodage | Gratuit, sans clé |
-| OSRM | Calcul des trajets | Gratuit, sans clé |
-| Open-Meteo | Météo | Gratuit, sans clé |
-
 ## Documentation
 
 Le rapport complet du projet est disponible dans [`docs/Rapport.pdf`](docs/Rapport.pdf).
